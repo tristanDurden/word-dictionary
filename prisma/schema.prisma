@@ -1,0 +1,24 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  //url      = env("DATABASE_URL")
+}
+
+model WordEntry {
+  id              String   @id @default(cuid())
+  word            String
+  definition      String
+  partOfSpeech    String
+  phonetic        String?
+  audioUrl        String?
+  exampleSentence String?
+  createdAt       DateTime @default(now())
+}
