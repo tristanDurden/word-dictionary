@@ -68,3 +68,5 @@ DATABASE_URL="mysql://worddict:worddict@localhost:3307/word_dict"
 ## Notes
 
 - `.env` is ignored by git; update `DATABASE_URL` if you want a different database.
+- In deployment containers, startup runs `prisma generate` and `prisma migrate deploy` before `next start`.
+- Ensure migrations exist in `prisma/migrations` (`npx prisma migrate dev --name init`) so production deploys can apply schema changes safely.

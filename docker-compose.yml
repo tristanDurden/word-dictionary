@@ -1,7 +1,6 @@
 services:
   mysql:
     image: mysql:8.4
-    container_name: word-dict-mysql
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: root
@@ -19,11 +18,19 @@ services:
       retries: 20
 
   app:
-    image: node:20
-    volumes:
-      - ./data:/app/data
-    working_dir: /app
-    command: sleep infinity
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: mysql://worddict:worddict@mysql:3306/word_dict
+    ports:
+      - "3000:3000"
 
 volumes:
   mysql_data:
