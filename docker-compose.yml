@@ -1,36 +1,14 @@
+# App only — MySQL comes from Dokploy Database service (same pattern as habit-hero).
+# Do NOT publish host :3000 (habit-hero already uses it). Traefik uses expose.
 services:
-  mysql:
-    image: mysql:8.4
-    restart: unless-stopped
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: word_dict
-      MYSQL_USER: worddict
-      MYSQL_PASSWORD: worddict
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: unless-stopped
-    depends_on:
-      mysql:
-        condition: service_healthy
+    restart: always
+    expose:
+      - "3000"
     environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: mysql://worddict:worddict@mysql:3306/word_dict
-    ports:
-      - "3000:3000"
-
-volumes:
-  mysql_data:
+      - DATABASE_URL=${DATABASE_URL}
+      - NODE_ENV=production
+      - PORT=3000
