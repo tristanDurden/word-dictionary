@@ -4,9 +4,17 @@ import GitHub from "next-auth/providers/github";
 
 import { prisma } from "@/lib/prisma";
 
+const githubId = process.env.AUTH_GITHUB_ID ?? process.env.GITHUB_ID;
+const githubSecret = process.env.AUTH_GITHUB_SECRET ?? process.env.GITHUB_SECRET;
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  providers: [GitHub],
+  providers: [
+    GitHub({
+      clientId: githubId,
+      clientSecret: githubSecret,
+    }),
+  ],
   trustHost: true,
   callbacks: {
     session({ session, user }) {
