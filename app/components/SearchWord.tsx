@@ -4,10 +4,11 @@ import { FormEvent, useMemo, useState } from "react";
 import type { DictionaryResult, SavedWord } from "@/lib/types";
 
 type SearchWordProps = {
+  canSave: boolean;
   onWordSaved: (savedWord: SavedWord) => void;
 };
 
-export default function SearchWord({ onWordSaved }: SearchWordProps) {
+export default function SearchWord({ canSave, onWordSaved }: SearchWordProps) {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -210,14 +211,20 @@ export default function SearchWord({ onWordSaved }: SearchWordProps) {
             ))}
           </div>
 
-          <button
-            type="button"
-            onClick={saveSelectedDefinition}
-            disabled={isSaving}
-            className="mt-6 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700"
-          >
-            {isSaving ? "Saving..." : "Save selected meaning"}
-          </button>
+          {canSave ? (
+            <button
+              type="button"
+              onClick={saveSelectedDefinition}
+              disabled={isSaving}
+              className="mt-6 rounded-lg bg-emerald-600 px-4 py-2 font-medium text-white transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+            >
+              {isSaving ? "Saving..." : "Save selected meaning"}
+            </button>
+          ) : (
+            <p className="mt-6 text-sm text-slate-500">
+              Sign in with GitHub to save this meaning to your dictionary.
+            </p>
+          )}
         </section>
       )}
     </>

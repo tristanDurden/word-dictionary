@@ -10,5 +10,9 @@ services:
       - "3000"
     environment:
       - DATABASE_URL=${DATABASE_URL}
+      - AUTH_SECRET=${AUTH_SECRET}
+      - AUTH_GITHUB_ID=${AUTH_GITHUB_ID}
+      - AUTH_GITHUB_SECRET=${AUTH_GITHUB_SECRET}
+      - AUTH_URL=${AUTH_URL}
       - NODE_ENV=production
       - PORT=3000

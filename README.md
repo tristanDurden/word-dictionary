@@ -18,10 +18,20 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Features
 
+- Sign in with GitHub (Auth.js) — each user has a private saved-word dictionary
 - Search English words from the Free Dictionary API
 - View phonetic transcription, pronunciation audio, and meanings
 - Select one meaning and save it to MySQL via Prisma
 - Use browser text-to-speech as a fallback pronunciation button
+
+## Auth (GitHub)
+
+1. Create an OAuth App at https://github.com/settings/developers
+2. Set **Homepage URL** to `http://localhost:3000` (or your production URL)
+3. Set **Authorization callback URL** to `http://localhost:3000/api/auth/callback/github`
+4. Copy Client ID / Client Secret into `.env` (see `.env.example`)
+5. Generate `AUTH_SECRET` with `openssl rand -base64 32`
+6. In production, also set `AUTH_URL` to your public app URL
 
 ## Backend route
 
@@ -45,18 +55,19 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Saved words API
 
-- `GET /api/words` - list saved words (latest first)
+Requires a signed-in session. Each request is scoped to the current user.
+
+- `GET /api/words` - list your saved words (latest first)
 - `POST /api/words` - create a saved word
-- `DELETE /api/words/:id` - remove a saved word
+- `DELETE /api/words/:id` - remove one of your saved words
 
 ## Prisma + MySQL setup (Docker)
 
-Schema lives in `prisma/schema.prisma` with model `WordEntry`.
+Schema lives in `prisma/schema.prisma` with Auth.js models (`User`, `Account`, `Session`) and `WordEntry` owned by `userId`.
 
 ```bash
-docker compose up -d mysql
 npx prisma generate
-npx prisma db push
+npx prisma migrate deploy
 ```
 
 Default database URL in `.env`:
@@ -67,6 +78,6 @@ DATABASE_URL="mysql://worddict:worddict@localhost:3307/word_dict"
 
 ## Notes
 
-- `.env` is ignored by git; update `DATABASE_URL` if you want a different database.
-- In deployment containers, startup runs `prisma generate` and `prisma migrate deploy` before `next start`.
-- Ensure migrations exist in `prisma/migrations` (`npx prisma migrate dev --name init`) so production deploys can apply schema changes safely.
+- `.env` is ignored by git; update `DATABASE_URL` and auth vars as needed.
+- In deployment containers, startup runs `prisma migrate deploy` before `next start`.
+- Pass `AUTH_SECRET`, `AUTH_GITHUB_ID`, `AUTH_GITHUB_SECRET`, and `AUTH_URL` through Dokploy / docker-compose.

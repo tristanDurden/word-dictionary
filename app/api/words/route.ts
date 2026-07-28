@@ -1,10 +1,17 @@
 import { NextResponse } from "next/server";
 
+import { requireUserId } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import type { CreateWordPayload } from "@/lib/types";
 
 export async function GET() {
+  const { userId, error } = await requireUserId();
+  if (error) {
+    return error;
+  }
+
   const words = await prisma.wordEntry.findMany({
+    where: { userId },
     orderBy: { createdAt: "desc" },
   });
 
@@ -12,6 +19,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const { userId, error } = await requireUserId();
+  if (error) {
+    return error;
+  }
+
   const payload = (await request.json()) as CreateWordPayload;
 
   const word = payload.word?.trim();
@@ -33,6 +45,7 @@ export async function POST(request: Request) {
       phonetic: payload.phonetic?.trim() || null,
       audioUrl: payload.audioUrl?.trim() || null,
       exampleSentence: payload.exampleSentence?.trim() || null,
+      userId,
     },
   });
 

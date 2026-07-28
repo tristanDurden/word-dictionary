@@ -15,6 +15,12 @@ export default function SavedWords({ refreshToken }: SavedWordsProps) {
     async function fetchSavedWords() {
       try {
         const response = await fetch("/api/words", { cache: "no-store" });
+        if (response.status === 401) {
+          setErrorMessage("Sign in to load your saved words.");
+          setSavedWords([]);
+          return;
+        }
+
         if (!response.ok) {
           setErrorMessage("Could not load saved words.");
           return;
