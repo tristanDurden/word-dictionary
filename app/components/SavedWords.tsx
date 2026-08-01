@@ -1,40 +1,65 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { SavedWord } from "@/lib/types";
+import { useEffect } from "react";
 
-type SavedWordsProps = {
-  refreshToken: number;
-};
+import { usePracticeStore } from "@/lib/stores/practice-store";
+import { useWordsStore } from "@/lib/stores/words-store";
+import type { WordPracticeProgress } from "@/lib/types";
 
-export default function SavedWords({ refreshToken }: SavedWordsProps) {
-  const [savedWords, setSavedWords] = useState<SavedWord[]>([]);
-  const [errorMessage, setErrorMessage] = useState("");
+function PracticeProgress({ practice }: { practice: WordPracticeProgress }) {
+  const {
+    attemptCount,
+    latestOverallScore,
+    latestMeaningScore,
+    latestGrammarScore,
+    previousOverallScore,
+  } = practice;
+
+  const delta =
+    latestOverallScore != null && previousOverallScore != null
+      ? latestOverallScore - previousOverallScore
+      : null;
+
+  return (
+    <p className="mt-1 text-sm text-slate-500">
+      Practice: {latestOverallScore}/100
+      {delta != null && (
+        <>
+          {" "}
+          ({delta > 0 ? "+" : ""}
+          {delta} vs last)
+        </>
+      )}
+      {" · "}
+      meaning {latestMeaningScore}/100
+      {" · "}
+      grammar {latestGrammarScore}/100
+      {" · "}
+      {attemptCount} attempt{attemptCount === 1 ? "" : "s"}
+    </p>
+  );
+}
+
+export default function SavedWords() {
+  const dictionary = useWordsStore((state) => state.dictionary);
+  const error = useWordsStore((state) => state.error);
+  const isLoading = useWordsStore((state) => state.isLoading);
+  const fetchDictionary = useWordsStore((state) => state.fetchDictionary);
+  const deleteWord = useWordsStore((state) => state.deleteWord);
+  const clearIfWordDeleted = usePracticeStore(
+    (state) => state.clearIfWordDeleted,
+  );
 
   useEffect(() => {
-    async function fetchSavedWords() {
-      try {
-        const response = await fetch("/api/words", { cache: "no-store" });
-        if (response.status === 401) {
-          setErrorMessage("Sign in to load your saved words.");
-          setSavedWords([]);
-          return;
-        }
+    void fetchDictionary();
+  }, [fetchDictionary]);
 
-        if (!response.ok) {
-          setErrorMessage("Could not load saved words.");
-          return;
-        }
-
-        const payload = (await response.json()) as SavedWord[];
-        setSavedWords(payload);
-      } catch {
-        setErrorMessage("Could not load saved words.");
-      }
+  async function handleRemove(id: string) {
+    const removed = await deleteWord(id);
+    if (removed) {
+      clearIfWordDeleted(id);
     }
-
-    void fetchSavedWords();
-  }, [refreshToken]);
+  }
 
   function playWordTts(word: string) {
     if (!word.trim()) {
@@ -47,34 +72,21 @@ export default function SavedWords({ refreshToken }: SavedWordsProps) {
     window.speechSynthesis.speak(utterance);
   }
 
-  async function removeSavedWord(id: string) {
-    try {
-      const response = await fetch(`/api/words/${id}`, { method: "DELETE" });
-      if (!response.ok) {
-        setErrorMessage("Could not remove saved word.");
-        return;
-      }
-
-      setSavedWords((previous) => previous.filter((item) => item.id !== id));
-      setErrorMessage("");
-    } catch {
-      setErrorMessage("Could not remove saved word.");
-    }
-  }
-
   return (
     <section id="saved-words" className="rounded-2xl bg-white p-6 shadow-sm">
       <h2 className="text-xl font-semibold">Saved words</h2>
-      {errorMessage && (
+      {error && (
         <p className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {errorMessage}
+          {error}
         </p>
       )}
-      {savedWords.length === 0 ? (
+      {isLoading ? (
+        <p className="mt-2 text-sm text-slate-500">Loading saved words…</p>
+      ) : dictionary.length === 0 ? (
         <p className="mt-2 text-sm text-slate-500">No saved words yet.</p>
       ) : (
         <ul className="mt-4 space-y-3">
-          {savedWords.map((item) => (
+          {dictionary.map((item) => (
             <li
               key={item.id}
               className="flex flex-col gap-2 rounded-lg border border-slate-200 p-3 md:flex-row md:items-start md:justify-between"
@@ -87,12 +99,21 @@ export default function SavedWords({ refreshToken }: SavedWordsProps) {
                   </span>
                 </p>
                 <p className="text-sm text-slate-700">{item.definition}</p>
+                {item.practice && item.practice.attemptCount > 0 && (
+                  <PracticeProgress practice={item.practice} />
+                )}
                 {item.phonetic && (
-                  <p className="text-sm text-slate-500">Phonetic: {item.phonetic}</p>
+                  <p className="text-sm text-slate-500">
+                    Phonetic: {item.phonetic}
+                  </p>
                 )}
                 <div className="mt-2 flex flex-wrap gap-2">
                   {item.audioUrl && (
-                    <audio controls src={item.audioUrl} className="h-10 w-60 max-w-full">
+                    <audio
+                      controls
+                      src={item.audioUrl}
+                      className="h-10 w-60 max-w-full"
+                    >
                       <track kind="captions" />
                     </audio>
                   )}
@@ -107,7 +128,7 @@ export default function SavedWords({ refreshToken }: SavedWordsProps) {
               </div>
               <button
                 type="button"
-                onClick={() => removeSavedWord(item.id)}
+                onClick={() => void handleRemove(item.id)}
                 className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm hover:bg-slate-100"
               >
                 Remove

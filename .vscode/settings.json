@@ -1,3 +1,21 @@
 {
-  "prisma.pinToPrisma6": true
+  "highlight-matching-tag.enabled": true,
+  "highlight-matching-tag.styles": {
+    "opening": {
+      "name": {
+        "highlight": "rgba(80,150,255,0.3)"
+      }
+    },
+    "closing": {
+      "name": {
+        "highlight": "rgba(80,150,255,0.3)"
+      }
+    }
+  },
+  "prisma.pinToPrisma6": true,
+  "highlight-matching-tag.languages": [
+    "html",
+    "javascriptreact",
+    "typescriptreact"
+  ]
 }

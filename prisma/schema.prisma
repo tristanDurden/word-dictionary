@@ -9,16 +9,17 @@ datasource db {
 }
 
 model User {
-  id            String      @id @default(cuid())
-  name          String?
-  email         String?     @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  wordEntries   WordEntry[]
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id               String            @id @default(cuid())
+  name             String?
+  email            String?           @unique
+  emailVerified    DateTime?
+  image            String?
+  accounts         Account[]
+  sessions         Session[]
+  wordEntries      WordEntry[]
+  practiceAttempts PracticeAttempt[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 }
 
 model Account {
@@ -60,16 +61,39 @@ model VerificationToken {
 }
 
 model WordEntry {
-  id              String   @id @default(cuid())
-  word            String
-  definition      String   @db.Text
-  partOfSpeech    String
-  phonetic        String?
-  audioUrl        String?
-  exampleSentence String?  @db.Text
-  createdAt       DateTime @default(now())
-  userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id               String            @id @default(cuid())
+  word             String
+  definition       String            @db.Text
+  partOfSpeech     String
+  phonetic         String?
+  audioUrl         String?
+  exampleSentence  String?           @db.Text
+  createdAt        DateTime          @default(now())
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  practiceAttempts PracticeAttempt[]
 
   @@index([userId])
+}
+
+model PracticeAttempt {
+  id              String   @id @default(cuid())
+  userId          String
+  wordEntryId     String
+  answer          String   @db.Text
+  meaningScore    Int
+  grammarScore    Int
+  overallScore    Int
+  meaningFeedback String   @db.Text
+  grammarFeedback String   @db.Text
+  grammarMistakes Json
+  summary         String   @db.Text
+  createdAt       DateTime @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordEntry WordEntry @relation(fields: [wordEntryId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([wordEntryId])
+  @@index([userId, wordEntryId, createdAt])
 }

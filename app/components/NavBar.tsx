@@ -1,23 +1,34 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { signIn, signOut, useSession } from "next-auth/react";
 
 export default function NavBar() {
+  const pathname = usePathname();
   const { data: session, status } = useSession();
+
+  const linkClass = (href: string) =>
+    `hidden sm:inline ${
+      pathname === href ? "text-sky-700" : "hover:text-sky-700"
+    }`;
 
   return (
     <nav className="sticky top-0 z-10 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
       <div className="flex items-center justify-between gap-3">
-        <a href="#" className="text-lg font-bold text-slate-900">
+        <Link href="/" className="text-lg font-bold text-slate-900">
           Word Dictionary
-        </a>
+        </Link>
         <div className="flex items-center gap-3 text-sm font-medium text-slate-700 sm:gap-4">
-          <a href="#find-word" className="hidden hover:text-sky-700 sm:inline">
+          <Link href="/" className={linkClass("/")}>
             Find a word
-          </a>
-          <a href="#saved-words" className="hidden hover:text-sky-700 sm:inline">
+          </Link>
+          <Link href="/#saved-words" className={linkClass("/")}>
             Saved words
-          </a>
+          </Link>
+          <Link href="/practice" className={linkClass("/practice")}>
+            Practice
+          </Link>
 
           {status === "loading" ? (
             <span className="text-slate-400">…</span>

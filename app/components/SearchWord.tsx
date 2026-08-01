@@ -1,14 +1,16 @@
 "use client";
 
 import { FormEvent, useMemo, useState } from "react";
-import type { DictionaryResult, SavedWord } from "@/lib/types";
+
+import { useWordsStore } from "@/lib/stores/words-store";
+import type { DictionaryResult } from "@/lib/types";
 
 type SearchWordProps = {
   canSave: boolean;
-  onWordSaved: (savedWord: SavedWord) => void;
 };
 
-export default function SearchWord({ canSave, onWordSaved }: SearchWordProps) {
+export default function SearchWord({ canSave }: SearchWordProps) {
+  const createWord = useWordsStore((state) => state.createWord);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -94,35 +96,24 @@ export default function SearchWord({ canSave, onWordSaved }: SearchWordProps) {
     setIsSaving(true);
     setErrorMessage("");
 
-    try {
-      const response = await fetch("/api/words", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          word: result.word,
-          definition: selected.definition,
-          partOfSpeech: selected.partOfSpeech,
-          phonetic: result.phonetic,
-          audioUrl: result.audioUrl,
-        }),
-      });
+    const saved = await createWord({
+      word: result.word,
+      definition: selected.definition,
+      partOfSpeech: selected.partOfSpeech,
+      phonetic: result.phonetic,
+      audioUrl: result.audioUrl,
+    });
 
-      const payload = (await response.json()) as SavedWord | { error: string };
+    setIsSaving(false);
 
-      if (!response.ok) {
-        setErrorMessage("error" in payload ? payload.error : "Could not save word.");
-        return;
-      }
-
-      onWordSaved(payload as SavedWord);
-      setQuery("");
-      setResult(null);
-      setSelectedDefinitionId("");
-    } catch {
-      setErrorMessage("Could not save word. Please try again.");
-    } finally {
-      setIsSaving(false);
+    if (!saved) {
+      setErrorMessage("Could not save word.");
+      return;
     }
+
+    setQuery("");
+    setResult(null);
+    setSelectedDefinitionId("");
   }
 
   return (
