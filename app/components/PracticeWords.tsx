@@ -1,12 +1,33 @@
 "use client";
 
+import { Loader2, Shuffle } from "lucide-react";
+
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { usePracticeStore } from "@/lib/stores/practice-store";
 
-function ScoreBadge({ label, score }: { label: string; score: number }) {
+function ScoreCard({ label, score }: { label: string; score: number }) {
   return (
-    <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-      <p className="text-xs uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="text-lg font-semibold text-slate-900">{score}/100</p>
+    <div className="space-y-2 rounded-lg border border-border bg-muted/40 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          {label}
+        </p>
+        <Badge variant="secondary">{score}/100</Badge>
+      </div>
+      <Progress value={score} className="h-1.5" />
     </div>
   );
 }
@@ -22,113 +43,153 @@ export function PracticeWords() {
   const submitAnswer = usePracticeStore((state) => state.submitAnswer);
 
   return (
-    <div className="rounded-lg bg-white p-6 shadow">
-      <div>
-        <h2 className="text-lg font-bold text-slate-900">Practice Words</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          Practice your words by explaining words with your own words
-        </p>
-      </div>
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle>Practice</CardTitle>
+          <CardDescription>
+            Explain a saved word in your own words. AI scores meaning and
+            grammar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {statusMessage && (
+            <Alert variant="destructive">
+              <AlertDescription>{statusMessage}</AlertDescription>
+            </Alert>
+          )}
 
-      {statusMessage && (
-        <p className="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-          {statusMessage}
-        </p>
-      )}
-
-      <div className="mt-6 flex flex-row gap-4">
-        <div className="mt-6 flex flex-col gap-4">
-          <p className="text-sm text-slate-500">
-            {currentWord
-              ? currentWord.word
-              : "pick word randomly by pressing the button below!"}
-          </p>
-          <button
-            type="button"
-            className="rounded-md bg-sky-400 px-4 py-2 text-white hover:bg-sky-600"
-            onClick={() => void pickRandomWord()}
-          >
-            I am lucky!
-          </button>
-        </div>
-        <div className="mt-6 flex flex-col gap-4">
-          <textarea
-            className="min-h-[100px] w-full resize-none rounded-md border border-slate-300 p-2"
-            placeholder="Enter your answer here..."
-            value={answer}
-            onChange={(event) => setAnswer(event.target.value)}
-          />
-          <button
-            type="button"
-            disabled={isSubmitting || !currentWord}
-            className="mt-4 rounded-md bg-sky-400 px-4 py-2 text-white hover:bg-sky-600 disabled:cursor-not-allowed disabled:bg-slate-400"
-            onClick={() => void submitAnswer()}
-          >
-            {isSubmitting ? "Submitting..." : "Submit Answer"}
-          </button>
-        </div>
-      </div>
-
-      <div>
-        <p className="mt-4 text-sm text-slate-500">Your answer:</p>
-        <p className="font-medium text-slate-400">
-          {answer.trim() ? answer : "No answer yet"}
-        </p>
-
-        <p className="mt-4 text-sm text-slate-500">Evaluation:</p>
-        {!evaluation ? (
-          <p className="font-medium text-slate-400">No evaluation yet</p>
-        ) : (
-          <div className="mt-2 space-y-4">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <ScoreBadge label="Overall" score={evaluation.overallScore} />
-              <ScoreBadge label="Meaning" score={evaluation.meaning.score} />
-              <ScoreBadge label="Grammar" score={evaluation.grammar.score} />
-            </div>
-
-            {evaluation.summary && (
-              <p className="text-sm text-slate-700">{evaluation.summary}</p>
-            )}
-
-            <div>
-              <p className="text-sm font-medium text-slate-800">Meaning</p>
-              <p className="mt-1 text-sm text-slate-600">
-                {evaluation.meaning.feedback || "No meaning feedback."}
+          <div className="grid gap-6 md:grid-cols-[minmax(0,220px)_1fr]">
+            <div className="space-y-3 rounded-lg border border-dashed border-border bg-muted/30 p-4">
+              <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Current word
               </p>
-            </div>
-
-            <div>
-              <p className="text-sm font-medium text-slate-800">Grammar</p>
-              <p className="mt-1 text-sm text-slate-600">
-                {evaluation.grammar.feedback || "No grammar feedback."}
-              </p>
-              {evaluation.grammar.mistakes.length > 0 && (
-                <ul className="mt-2 space-y-2">
-                  {evaluation.grammar.mistakes.map((mistake, index) => (
-                    <li
-                      key={`${mistake.mistake}-${index}`}
-                      className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-slate-700"
-                    >
-                      <p>
-                        <span className="font-medium">Mistake:</span>{" "}
-                        {mistake.mistake}
-                      </p>
-                      <p>
-                        <span className="font-medium">Correction:</span>{" "}
-                        {mistake.correction}
-                      </p>
-                      <p>
-                        <span className="font-medium">Why:</span>{" "}
-                        {mistake.explanation}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+              {currentWord ? (
+                <div className="space-y-1">
+                  <p className="font-heading text-2xl font-semibold tracking-tight">
+                    {currentWord.word}
+                  </p>
+                  {currentWord.partOfSpeech && (
+                    <Badge variant="outline">{currentWord.partOfSpeech}</Badge>
+                  )}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Pick a random word to begin.
+                </p>
               )}
+              <Button
+                type="button"
+                variant="secondary"
+                className="w-full"
+                onClick={() => void pickRandomWord()}
+              >
+                <Shuffle data-icon="inline-start" />I am lucky!
+              </Button>
+            </div>
+
+            <div className="space-y-3">
+              <Label htmlFor="practice-answer">Your explanation</Label>
+              <Textarea
+                id="practice-answer"
+                className="min-h-36 resize-y"
+                placeholder="Explain the meaning in your own words…"
+                value={answer}
+                onChange={(event) => setAnswer(event.target.value)}
+              />
+              <Button
+                type="button"
+                disabled={isSubmitting || !currentWord}
+                onClick={() => void submitAnswer()}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    Submitting
+                  </>
+                ) : (
+                  "Submit answer"
+                )}
+              </Button>
             </div>
           </div>
-        )}
-      </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Evaluation</CardTitle>
+          <CardDescription>
+            Scores and feedback appear after you submit.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!evaluation ? (
+            <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-sm text-muted-foreground">
+              No evaluation yet.
+            </p>
+          ) : (
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <ScoreCard label="Overall" score={evaluation.overallScore} />
+                <ScoreCard label="Meaning" score={evaluation.meaning.score} />
+                <ScoreCard label="Grammar" score={evaluation.grammar.score} />
+              </div>
+
+              {evaluation.summary && (
+                <p className="text-sm leading-relaxed text-foreground/90">
+                  {evaluation.summary}
+                </p>
+              )}
+
+              <Separator />
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Meaning</p>
+                <p className="text-sm text-muted-foreground">
+                  {evaluation.meaning.feedback || "No meaning feedback."}
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Grammar</p>
+                <p className="text-sm text-muted-foreground">
+                  {evaluation.grammar.feedback || "No grammar feedback."}
+                </p>
+                {evaluation.grammar.mistakes.length > 0 && (
+                  <ul className="mt-3 space-y-2">
+                    {evaluation.grammar.mistakes.map((mistake, index) => (
+                      <li
+                        key={`${mistake.mistake}-${index}`}
+                        className="rounded-lg border border-amber-300 bg-amber-100 px-3 py-2 text-sm text-amber-950"
+                      >
+                        <p>
+                          <span className="font-semibold text-amber-950">
+                            Mistake:
+                          </span>{" "}
+                          {mistake.mistake}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-amber-950">
+                            Correction:
+                          </span>{" "}
+                          {mistake.correction}
+                        </p>
+                        <p>
+                          <span className="font-semibold text-amber-950">
+                            Why:
+                          </span>{" "}
+                          {mistake.explanation}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

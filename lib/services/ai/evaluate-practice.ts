@@ -1,7 +1,7 @@
 import { Type } from "@google/genai";
 import { z } from "zod";
 
-import { gemini } from "@/lib/services/ai/providers/gemini";
+import { getGemini } from "@/lib/services/ai/providers/gemini";
 import type { PracticeEvaluation } from "@/lib/types";
 
 const EVALUATION_TIMEOUT_MS = 25_000;
@@ -196,7 +196,7 @@ async function evaluateOnce(
   let response;
   try {
     response = await withTimeout(
-      gemini.models.generateContent({
+      getGemini().models.generateContent({
         model: "gemini-3.6-flash",
         contents: buildPrompt(input),
         config: {

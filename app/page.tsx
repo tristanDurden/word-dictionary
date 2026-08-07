@@ -4,6 +4,13 @@ import { useSession } from "next-auth/react";
 
 import SavedWords from "./components/SavedWords";
 import SearchWord from "./components/SearchWord";
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Home() {
   const { data: session, status } = useSession();
@@ -11,9 +18,11 @@ export default function Home() {
 
   return (
     <>
-      <header className="rounded-2xl bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-bold md:text-3xl">Dictionary Learning App</h1>
-        <p className="mt-2 text-sm text-slate-600 md:text-base">
+      <header className="space-y-2 px-1">
+        <h1 className="font-heading text-3xl font-semibold tracking-tight md:text-4xl">
+          Word Dictionary
+        </h1>
+        <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-100 md:text-base">
           Search an English word to see meanings, phonetics, and pronunciation.
           {isSignedIn
             ? " Your saved words stay private to your account."
@@ -24,18 +33,24 @@ export default function Home() {
       <SearchWord canSave={isSignedIn} />
 
       {status === "loading" ? (
-        <section className="rounded-2xl bg-white p-6 shadow-sm">
-          <p className="text-sm text-slate-500">Loading your dictionary…</p>
-        </section>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+        </Card>
       ) : isSignedIn ? (
         <SavedWords />
       ) : (
-        <section id="saved-words" className="rounded-2xl bg-white p-6 shadow-sm">
-          <h2 className="text-xl font-semibold">Your dictionary</h2>
-          <p className="mt-2 text-sm text-slate-500">
-            Sign in with GitHub to save words and see your personal dictionary.
-          </p>
-        </section>
+        <Card id="saved-words">
+          <CardHeader>
+            <CardTitle>Your dictionary</CardTitle>
+            <CardDescription>
+              Sign in with GitHub to save words and see your personal
+              dictionary.
+            </CardDescription>
+          </CardHeader>
+        </Card>
       )}
     </>
   );

@@ -2,66 +2,122 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LogOut } from "lucide-react";
 import { signIn, signOut, useSession } from "next-auth/react";
+
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const links = [
+  { href: "/", label: "Find a word" },
+  { href: "/#saved-words", label: "Saved words" },
+  { href: "/practice", label: "Practice" },
+  { href: "/synonyms", label: "Synonyms" },
+] as const;
 
 export default function NavBar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
 
-  const linkClass = (href: string) =>
-    `hidden sm:inline ${
-      pathname === href ? "text-sky-700" : "hover:text-sky-700"
-    }`;
-
   return (
-    <nav className="sticky top-0 z-10 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+    <nav className="sticky top-0 z-10 rounded-xl border border-border/80 bg-card/90 px-3 py-2.5 shadow-sm backdrop-blur-md supports-backdrop-filter:bg-card/75">
       <div className="flex items-center justify-between gap-3">
-        <Link href="/" className="text-lg font-bold text-slate-900">
+        <Link
+          href="/"
+          className="font-heading text-lg font-semibold tracking-tight text-foreground transition-colors hover:text-primary"
+        >
           Word Dictionary
         </Link>
-        <div className="flex items-center gap-3 text-sm font-medium text-slate-700 sm:gap-4">
-          <Link href="/" className={linkClass("/")}>
-            Find a word
-          </Link>
-          <Link href="/#saved-words" className={linkClass("/")}>
-            Saved words
-          </Link>
-          <Link href="/practice" className={linkClass("/practice")}>
-            Practice
-          </Link>
+
+        <div className="flex items-center gap-1 sm:gap-2">
+          <div className="hidden items-center gap-1 sm:flex">
+            {links.map((link) => {
+              const isActive =
+                !link.href.includes("#") && pathname === link.href;
+
+              return (
+                <Button
+                  key={link.href + link.label}
+                  variant={isActive ? "secondary" : "ghost"}
+                  size="sm"
+                  asChild
+                >
+                  <Link href={link.href}>{link.label}</Link>
+                </Button>
+              );
+            })}
+          </div>
 
           {status === "loading" ? (
-            <span className="text-slate-400">…</span>
+            <Skeleton className="size-8 rounded-full" />
           ) : session?.user ? (
-            <div className="flex items-center gap-2">
-              {session.user.image && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={session.user.image}
-                  alt=""
-                  className="h-7 w-7 rounded-full"
-                  referrerPolicy="no-referrer"
-                />
-              )}
-              <span className="hidden max-w-28 truncate text-slate-600 sm:inline">
-                {session.user.name ?? session.user.email}
-              </span>
-              <button
-                type="button"
-                onClick={() => signOut()}
-                className="rounded-lg border border-slate-300 px-3 py-1.5 hover:bg-slate-100"
-              >
-                Sign out
-              </button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full"
+                  aria-label="Account menu"
+                >
+                  <Avatar size="sm">
+                    {session.user.image && (
+                      <AvatarImage
+                        src={session.user.image}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                      />
+                    )}
+                    <AvatarFallback>
+                      {(session.user.name ?? session.user.email ?? "U")
+                        .slice(0, 1)
+                        .toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel className="font-normal">
+                  <p className="truncate text-sm font-medium">
+                    {session.user.name ?? "Signed in"}
+                  </p>
+                  {session.user.email && (
+                    <p className="truncate text-xs text-muted-foreground">
+                      {session.user.email}
+                    </p>
+                  )}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {links.map((link) => {
+                  return (
+                    <DropdownMenuItem
+                      key={link.href}
+                      className="sm:hidden"
+                      asChild
+                    >
+                      <Link href={link.href}>{link.label}</Link>
+                    </DropdownMenuItem>
+                  );
+                })}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => signOut()}>
+                  <LogOut />
+                  Sign out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ) : (
-            <button
-              type="button"
-              onClick={() => signIn("github")}
-              className="rounded-lg bg-slate-900 px-3 py-1.5 text-white hover:bg-slate-800"
-            >
+            <Button size="sm" onClick={() => signIn("github")}>
               Sign in with GitHub
-            </button>
+            </Button>
           )}
         </div>
       </div>

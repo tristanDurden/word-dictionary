@@ -42,3 +42,6 @@ next-env.d.ts
 
 dev.db
 dev.db-journal
+
+# OEWN raw dump (rebuild index via `npm run build:wordnet`)
+/data/oewn-raw/
