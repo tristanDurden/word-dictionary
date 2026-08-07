@@ -565,7 +565,8 @@ export default function SearchWord({ canSave }: SearchWordProps) {
               </Button>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Sign in with GitHub to save this meaning to your dictionary.
+                Sign in with Google or GitHub to save this meaning to your
+                dictionary.
               </p>
             )}
           </CardFooter>

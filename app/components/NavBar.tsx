@@ -1,9 +1,10 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogOut } from "lucide-react";
-import { signIn, signOut, useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import SignInDialog from "./SignInDialog";
 
 const links = [
   { href: "/", label: "Find a word" },
@@ -115,9 +117,9 @@ export default function NavBar() {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Button size="sm" onClick={() => signIn("github")}>
-              Sign in with GitHub
-            </Button>
+            <Suspense fallback={<Button size="sm">Sign in</Button>}>
+              <SignInDialog trigger={<Button size="sm">Sign in</Button>} />
+            </Suspense>
           )}
         </div>
       </div>

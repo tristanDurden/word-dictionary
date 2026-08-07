@@ -26,7 +26,7 @@ export default function Home() {
           Search an English word to see meanings, phonetics, and pronunciation.
           {isSignedIn
             ? " Your saved words stay private to your account."
-            : " Sign in with GitHub to keep your own dictionary."}
+            : " Sign in with Google or GitHub to keep your own dictionary."}
         </p>
       </header>
 
@@ -46,7 +46,7 @@ export default function Home() {
           <CardHeader>
             <CardTitle>Your dictionary</CardTitle>
             <CardDescription>
-              Sign in with GitHub to save words and see your personal
+              Sign in with Google or GitHub to save words and see your personal
               dictionary.
             </CardDescription>
           </CardHeader>
