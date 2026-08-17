@@ -34,7 +34,7 @@ export default function RootLayout({
           <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-background text-foreground">
             <div
               aria-hidden
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.03_250)_0%,_transparent_55%),linear-gradient(to_bottom,_transparent,_oklch(0.96_0.01_250))]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_top,_oklch(0.92_0.03_250)_0%,_transparent_55%),linear-gradient(to_bottom,_transparent,_oklch(0.96_0.01_250))] dark:bg-[radial-gradient(ellipse_at_top,_oklch(0.22_0.03_250)_0%,_transparent_55%),linear-gradient(to_bottom,_transparent,_oklch(0.16_0.01_250))]"
             />
             <main className="relative mx-auto flex w-full max-w-5xl flex-1 flex-col gap-6 px-4 py-8 md:px-8">
               <NavBar />

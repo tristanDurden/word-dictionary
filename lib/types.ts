@@ -17,6 +17,8 @@ export type CreateWordPayload = {
   phonetic?: string;
   audioUrl?: string;
   exampleSentence?: string;
+  folderId?: string | null;
+  isFinished?: boolean;
 };
 
 export type GrammarMistake = {
@@ -45,6 +47,7 @@ export type WordPracticeProgress = {
   latestMeaningScore: number | null;
   latestGrammarScore: number | null;
   previousOverallScore: number | null;
+  
 };
 
 export type SavedWord = {
@@ -55,5 +58,17 @@ export type SavedWord = {
   phonetic: string | null;
   audioUrl: string | null;
   createdAt: string;
+  folderId: string | null;
+  isFinished: boolean;
   practice?: WordPracticeProgress;
 };
+
+export type Folder = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** Id for tabs */
+export type FolderTabId = "all" | "finished" | string;

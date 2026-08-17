@@ -1,20 +1,24 @@
 "use client";
 
 import { useSession } from "next-auth/react";
+import { Search } from "lucide-react";
 
 import SavedWords from "./components/SavedWords";
-import SearchWord from "./components/SearchWord";
+import DictionaryTabs from "./components/Tabs";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSearchDialogStore } from "@/lib/stores/search-dialog-store";
 
 export default function Home() {
   const { data: session, status } = useSession();
   const isSignedIn = Boolean(session?.user);
+  const openSearch = useSearchDialogStore((state) => state.open);
 
   return (
     <>
@@ -30,7 +34,10 @@ export default function Home() {
         </p>
       </header>
 
-      <SearchWord canSave={isSignedIn} />
+      <Button size="lg" onClick={openSearch} className="w-fit">
+        <Search data-icon="inline-start" />
+        Look up a word
+      </Button>
 
       {status === "loading" ? (
         <Card>
@@ -40,7 +47,10 @@ export default function Home() {
           </CardHeader>
         </Card>
       ) : isSignedIn ? (
-        <SavedWords />
+        <div className="space-y-4">
+          <DictionaryTabs />
+          <SavedWords />
+        </div>
       ) : (
         <Card id="saved-words">
           <CardHeader>

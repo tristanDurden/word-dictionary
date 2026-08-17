@@ -8,19 +8,12 @@ import {
   useState,
 } from "react";
 import { Loader2, Volume2 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Command,
   CommandEmpty,
@@ -28,6 +21,14 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,17 +37,18 @@ import {
   PopoverContent,
 } from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useSearchDialogStore } from "@/lib/stores/search-dialog-store";
 import { useWordsStore } from "@/lib/stores/words-store";
 import type { DictionaryResult } from "@/lib/types";
-
-type SearchWordProps = {
-  canSave: boolean;
-};
 
 const SUGGEST_DEBOUNCE_MS = 250;
 const MIN_SUGGEST_CHARS = 2;
 
-export default function SearchWord({ canSave }: SearchWordProps) {
+export default function SearchWord() {
+  const { data: session } = useSession();
+  const canSave = Boolean(session?.user);
+  const isOpen = useSearchDialogStore((state) => state.isOpen);
+  const setOpen = useSearchDialogStore((state) => state.setOpen);
   const createWord = useWordsStore((state) => state.createWord);
   const dictionary = useWordsStore((state) => state.dictionary);
   const [query, setQuery] = useState("");
@@ -186,6 +188,27 @@ export default function SearchWord({ canSave }: SearchWordProps) {
     }
   }, [allowSuggestions, hasSuggestions, isSuggesting, query]);
 
+  function resetSearchState() {
+    setQuery("");
+    setIsLoading(false);
+    setIsSaving(false);
+    setErrorMessage("");
+    setResult(null);
+    setSelectedDefinitionId("");
+    setRemoteSuggestions([]);
+    setIsSuggesting(false);
+    setSuggestionsOpen(false);
+    setActiveSuggestion("");
+    setAllowSuggestions(true);
+  }
+
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) {
+      resetSearchState();
+    }
+  }
+
   function dismissSuggestions() {
     setAllowSuggestions(false);
     setSuggestionsOpen(false);
@@ -218,7 +241,9 @@ export default function SearchWord({ canSave }: SearchWordProps) {
       if (!response.ok) {
         setResult(null);
         setErrorMessage(
-          "error" in payload ? payload.error : "Could not fetch dictionary data.",
+          "error" in payload
+            ? payload.error
+            : "Could not fetch dictionary data.",
         );
         return;
       }
@@ -274,8 +299,7 @@ export default function SearchWord({ canSave }: SearchWordProps) {
       event.preventDefault();
       setActiveSuggestion((current) => {
         const index = allSuggestions.indexOf(current);
-        const nextIndex =
-          index <= 0 ? allSuggestions.length - 1 : index - 1;
+        const nextIndex = index <= 0 ? allSuggestions.length - 1 : index - 1;
         return allSuggestions[nextIndex];
       });
       return;
@@ -336,18 +360,20 @@ export default function SearchWord({ canSave }: SearchWordProps) {
     setQuery("");
     setResult(null);
     setSelectedDefinitionId("");
+    setOpen(false);
   }
 
   return (
-    <>
-      <Card id="find-word">
-        <CardHeader>
-          <CardTitle>Look up a word</CardTitle>
-          <CardDescription>
+    <Dialog open={isOpen} onOpenChange={handleOpenChange}>
+      <DialogContent className="flex max-h-[min(90vh,40rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+        <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12">
+          <DialogTitle>Look up a word</DialogTitle>
+          <DialogDescription>
             Search meanings, phonetics, and pronunciation.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4">
           <form
             className="flex flex-col gap-3 sm:flex-row"
             onSubmit={handleSearch}
@@ -390,7 +416,7 @@ export default function SearchWord({ canSave }: SearchWordProps) {
                 </PopoverAnchor>
                 <PopoverContent
                   align="start"
-                  className="w-(--radix-popover-trigger-width) p-0"
+                  className="z-60 w-(--radix-popover-trigger-width) p-0"
                   onOpenAutoFocus={(event) => event.preventDefault()}
                   onCloseAutoFocus={(event) => event.preventDefault()}
                 >
@@ -465,89 +491,91 @@ export default function SearchWord({ canSave }: SearchWordProps) {
               <AlertDescription>{errorMessage}</AlertDescription>
             </Alert>
           )}
-        </CardContent>
-      </Card>
 
-      {result && (
-        <Card>
-          <CardHeader className="border-b">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="space-y-1">
-                <CardTitle className="font-heading text-2xl tracking-tight">
-                  {result.word}
-                </CardTitle>
-                <CardDescription>
-                  {result.phonetic ? result.phonetic : "Phonetic not available"}
-                </CardDescription>
+          {result && (
+            <div className="space-y-4 rounded-xl border border-border">
+              <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="space-y-1">
+                  <h3 className="font-heading text-2xl font-semibold tracking-tight">
+                    {result.word}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    {result.phonetic
+                      ? result.phonetic
+                      : "Phonetic not available"}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {result.audioUrl && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => playWordTts(result.word)}
+                    >
+                      <Volume2 data-icon="inline-start" />
+                      Speak
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                {result.audioUrl && (
-                  <audio
-                    controls
-                    src={result.audioUrl}
-                    className="h-9 w-52 max-w-full"
-                  >
-                    <track kind="captions" />
-                  </audio>
+
+              <div className="space-y-5 px-4 pb-4">
+                {result.meanings.length === 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    No meanings returned for this word.
+                  </p>
                 )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => playWordTts(result.word)}
+
+                <RadioGroup
+                  value={selectedDefinitionId}
+                  onValueChange={setSelectedDefinitionId}
+                  className="gap-5"
                 >
-                  <Volume2 data-icon="inline-start" />
-                  Speak
-                </Button>
+                  {result.meanings.map((meaning, meaningIndex) => (
+                    <div
+                      key={`${meaning.partOfSpeech}-${meaningIndex}`}
+                      className="space-y-2"
+                    >
+                      <Badge
+                        variant="secondary"
+                        className="uppercase tracking-wide"
+                      >
+                        {meaning.partOfSpeech}
+                      </Badge>
+                      <div className="space-y-2">
+                        {meaning.definitions.map(
+                          (definition, definitionIndex) => {
+                            const optionId = `${meaningIndex}-${definitionIndex}`;
+                            return (
+                              <Label
+                                key={optionId}
+                                htmlFor={optionId}
+                                className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 font-normal transition-colors hover:bg-muted/50 has-[[data-slot=radio-group-item][data-state=checked]]:border-primary has-[[data-slot=radio-group-item][data-state=checked]]:bg-primary/5 has-[[data-slot=radio-group-item][data-checked]]:border-primary has-[[data-slot=radio-group-item][data-checked]]:bg-primary/5"
+                              >
+                                <RadioGroupItem
+                                  value={optionId}
+                                  id={optionId}
+                                  className="mt-0.5"
+                                />
+                                <span className="leading-relaxed">
+                                  {definition}
+                                </span>
+                              </Label>
+                            );
+                          },
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </RadioGroup>
               </div>
             </div>
-          </CardHeader>
+          )}
+        </div>
 
-          <CardContent className="space-y-5 pt-4">
-            {result.meanings.length === 0 && (
-              <p className="text-sm text-muted-foreground">
-                No meanings returned for this word.
-              </p>
-            )}
-
-            <RadioGroup
-              value={selectedDefinitionId}
-              onValueChange={setSelectedDefinitionId}
-              className="gap-5"
-            >
-              {result.meanings.map((meaning, meaningIndex) => (
-                <div
-                  key={`${meaning.partOfSpeech}-${meaningIndex}`}
-                  className="space-y-2"
-                >
-                  <Badge variant="secondary" className="uppercase tracking-wide">
-                    {meaning.partOfSpeech}
-                  </Badge>
-                  <div className="space-y-2">
-                    {meaning.definitions.map((definition, definitionIndex) => {
-                      const optionId = `${meaningIndex}-${definitionIndex}`;
-                      return (
-                        <Label
-                          key={optionId}
-                          htmlFor={optionId}
-                          className="flex cursor-pointer items-start gap-3 rounded-lg border border-border p-3 font-normal transition-colors hover:bg-muted/50 has-[[data-slot=radio-group-item][data-state=checked]]:border-primary has-[[data-slot=radio-group-item][data-state=checked]]:bg-primary/5 has-[[data-slot=radio-group-item][data-checked]]:border-primary has-[[data-slot=radio-group-item][data-checked]]:bg-primary/5"
-                        >
-                          <RadioGroupItem
-                            value={optionId}
-                            id={optionId}
-                            className="mt-0.5"
-                          />
-                          <span className="leading-relaxed">{definition}</span>
-                        </Label>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </RadioGroup>
-          </CardContent>
-
-          <CardFooter className="justify-between gap-3">
+        {result && (
+          <DialogFooter className="-mx-0 -mb-0 shrink-0 sm:justify-between">
             {canSave ? (
               <Button
                 type="button"
@@ -569,9 +597,9 @@ export default function SearchWord({ canSave }: SearchWordProps) {
                 dictionary.
               </p>
             )}
-          </CardFooter>
-        </Card>
-      )}
-    </>
+          </DialogFooter>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }

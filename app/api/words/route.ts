@@ -82,6 +82,18 @@ export async function POST(request: Request) {
     );
   }
 
+  let folderId: string | null = null;
+  if (payload.folderId) {
+    const folder = await prisma.folder.findFirst({
+      where: { id: payload.folderId, userId },
+      select: { id: true },
+    });
+    if (!folder) {
+      return NextResponse.json({ error: "Folder not found." }, { status: 404 });
+    }
+    folderId = folder.id;
+  }
+
   const created = await prisma.wordEntry.create({
     data: {
       word,
@@ -90,6 +102,8 @@ export async function POST(request: Request) {
       phonetic: payload.phonetic?.trim() || null,
       audioUrl: payload.audioUrl?.trim() || null,
       exampleSentence: payload.exampleSentence?.trim() || null,
+      folderId,
+      isFinished: Boolean(payload.isFinished),
       userId,
     },
   });

@@ -8,7 +8,12 @@ import { Toaster } from "@/components/ui/sonner";
 export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <SessionProvider>
-      <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+      <ThemeProvider
+        attribute="class"
+        defaultTheme="light"
+        enableSystem={false}
+        disableTransitionOnChange
+      >
         {children}
         <Toaster richColors closeButton position="top-right" />
       </ThemeProvider>

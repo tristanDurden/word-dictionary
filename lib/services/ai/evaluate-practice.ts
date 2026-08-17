@@ -169,18 +169,23 @@ function buildPrompt({
   ].join("\n");
 }
 
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+function withTimeout<T>(
+  run: (signal: AbortSignal) => Promise<T>,
+  ms: number,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), ms);
 
-  const timeout = new Promise<never>((_, reject) => {
-    timeoutId = setTimeout(() => reject(new EvaluationTimeoutError()), ms);
-  });
-
-  return Promise.race([promise, timeout]).finally(() => {
-    if (timeoutId !== undefined) {
+  return run(controller.signal)
+    .catch((error: unknown) => {
+      if (controller.signal.aborted) {
+        throw new EvaluationTimeoutError();
+      }
+      throw error;
+    })
+    .finally(() => {
       clearTimeout(timeoutId);
-    }
-  });
+    });
 }
 
 function isRetryableError(error: unknown): boolean {
@@ -196,14 +201,16 @@ async function evaluateOnce(
   let response;
   try {
     response = await withTimeout(
-      getGemini().models.generateContent({
-        model: "gemini-3.6-flash",
-        contents: buildPrompt(input),
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: geminiResponseSchema,
-        },
-      }),
+      (signal) =>
+        getGemini().models.generateContent({
+          model: "gemini-3.6-flash",
+          contents: buildPrompt(input),
+          config: {
+            abortSignal: signal,
+            responseMimeType: "application/json",
+            responseSchema: geminiResponseSchema,
+          },
+        }),
       EVALUATION_TIMEOUT_MS,
     );
   } catch (error) {
@@ -256,9 +263,10 @@ export async function evaluatePracticeAnswer(
 
       const canRetry = isRetryableError(error) && attempt < MAX_ATTEMPTS;
       if (canRetry) {
+        const reason =
+          error instanceof Error ? error.message : "unknown error";
         console.warn(
-          `Practice evaluation attempt ${attempt} failed, retrying:`,
-          error,
+          `Practice evaluation attempt ${attempt} failed (${reason}), retrying.`,
         );
         continue;
       }

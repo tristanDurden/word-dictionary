@@ -9,17 +9,19 @@ datasource db {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  name             String?
-  email            String?           @unique
-  emailVerified    DateTime?
-  image            String?
-  accounts         Account[]
-  sessions         Session[]
-  wordEntries      WordEntry[]
-  practiceAttempts PracticeAttempt[]
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id                  String               @id @default(cuid())
+  name                String?
+  email               String?              @unique
+  emailVerified       DateTime?
+  image               String?
+  accounts            Account[]
+  sessions            Session[]
+  wordEntries         WordEntry[]
+  practiceAttempts    PracticeAttempt[]
+  practiceDailyUsages PracticeDailyUsage[]
+  folders             Folder[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 }
 
 model Account {
@@ -72,8 +74,12 @@ model WordEntry {
   userId           String
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   practiceAttempts PracticeAttempt[]
+  folderId         String?
+  folder           Folder?           @relation(fields: [folderId], references: [id], onDelete: SetNull)
+  isFinished       Boolean           @default(false)
 
   @@index([userId])
+  @@index([folderId])
 }
 
 model PracticeAttempt {
@@ -96,4 +102,29 @@ model PracticeAttempt {
   @@index([userId])
   @@index([wordEntryId])
   @@index([userId, wordEntryId, createdAt])
+}
+
+/// Atomic per-user daily practice counter (UTC day). Prevents concurrent overshoot.
+model PracticeDailyUsage {
+  id     String   @id @default(cuid())
+  userId String
+  day    DateTime @db.Date
+  count  Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, day])
+  @@index([userId])
+}
+
+model Folder {
+  id          String      @id @default(cuid())
+  name        String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  userId      String
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wordEntries WordEntry[]
+
+  @@index([userId])
 }
